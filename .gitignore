@@ -1,0 +1,13 @@
+node_modules/
+tests/reports/*.json
+tests/reports/*.html
+tests/reports/*.pdf
+screenshots/
+videos/
+*.log
+.DS_Store
+.claude/
+.playwright-mcp/
+
+# Notes of the browser exploration round the steps were written from (kept local).
+exploration/

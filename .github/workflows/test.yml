@@ -1,0 +1,111 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - 2.0.x
+  pull_request:
+    branches:
+      - 2.0.x
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cucumber:
+    name: magento-steps test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      HEADLESS: 'true'
+      # The real store is built in this folder, next to the checkout.
+      SITE_DIR: ${{ github.workspace }}/../magento-site
+      PROJECT_NAME: magentosteps
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Free disk space on the runner
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune --all --force > /dev/null
+          df -h / | tail -1
+          free -m | sed -n 2p
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the JSDoc examples and feature steps against the step regexes
+        run: npm run test:examples
+
+      - name: Run cucumber-js dry-run (ambiguity / undefined step check)
+        run: npx cucumber-js --dry-run --tags "not @wip"
+        env:
+          WEBSHIP_REPORT_DISABLE: '1'
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Install DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          autostart: false
+
+      - name: Build the store with DDEV (Magento Open Source, sample data, test accounts)
+        run: scripts/build-site.sh
+
+      - name: Report the footprint of the build
+        if: always()
+        run: |
+          df -h / | tail -1
+          free -m | sed -n 2p
+          docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | grep "$PROJECT_NAME" || true
+          du -sh "$SITE_DIR" || true
+
+      - name: Check the site is the one cucumber.js runs against by default
+        run: |
+          DEFAULT_URL="$(LAUNCH_URL= node -e "console.log(require('./cucumber.js').default.worldParameters.launchUrl)")"
+          echo "Built: $LAUNCH_URL, default: $DEFAULT_URL"
+          test "${LAUNCH_URL%/}" = "$DEFAULT_URL"
+
+      - name: Run the admin panel features
+        run: npx cucumber-js --tags "@admin and not @wip and not @must-fail"
+        env:
+          WEBSHIP_REPORT_DISABLE: '1'
+
+      - name: Keep the report of the admin lane
+        if: always()
+        run: cp tests/reports/cucumber_report.json tests/reports/cucumber_report_admin.json || true
+
+      - name: Run the storefront features
+        if: always()
+        run: npx cucumber-js --tags "@storefront and not @admin and not @wip and not @must-fail"
+
+      - name: Prove that the assertions fail when they must
+        run: npm run test:must-fail
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: tests/reports/
+          retention-days: 14
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: screenshots/
+          retention-days: 14
+          if-no-files-found: ignore

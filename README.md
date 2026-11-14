@@ -1,0 +1,371 @@
+# magento-steps
+
+Cucumber step definitions for testing Magento Open Source stores with
+[webship-js](https://webship.co/docs/webship-js/2.0.x), a BDD browser automation
+harness built on Playwright and Cucumber-js.
+
+`@webship-js/magento-steps` covers the admin panel (log in by account handle,
+the menu and the pages, the grids, the forms, products, categories, orders from
+the invoice to the credit memo, customers, cart price rules, pages and blocks,
+the configuration, the cache and index state, what a restricted role may open)
+and the storefront of the default theme (the menu, categories with layered
+navigation, sorting and paging, search and its suggestions, the product page
+with its options, the mini cart, the cart, the checkout through to the order
+number, the customer account, the wish list, the comparison list, reviews, the
+newsletter, field errors).
+
+Every step was written from a round of testing the real pages in a browser, and
+the whole suite runs against a real store: CI builds Magento Open Source 2.4.9
+with its sample data in [DDEV](https://ddev.com) on every push and pull request;
+see [`.github/workflows/test.yml`](.github/workflows/test.yml). No step phrase
+carries the name of the platform.
+
+The pack is for **Magento Open Source**, the community edition. It needs no
+account, no access key and no paid or external service.
+
+## Requirements
+
+- Node.js 20 or later
+- A webship-js 2.0 test project (`webship-js` 2.0.10 or later)
+- A Magento Open Source 2.4 store to test, with the default storefront theme
+  and the default admin theme, in English
+
+## Install
+
+```bash
+npm install --save-dev @webship-js/magento-steps
+```
+
+## Quick start
+
+1. Add the step files to the `require` list of your webship-js `cucumber.js`:
+
+   ```javascript
+   require: [
+     'node_modules/webship-js/tests/step-definitions/**/*.js',
+     'node_modules/@webship-js/magento-steps/tests/step-definitions/*.js',
+     'tests/step-definitions/**/*.js',
+   ],
+   ```
+
+2. Point `launchUrl` at the store, give the admin path and name the accounts
+   the suite logs in with (see [Accounts](#accounts)):
+
+   ```javascript
+   worldParameters: {
+     launchUrl: process.env.LAUNCH_URL || 'https://your-store.example',
+     adminPath: 'admin',
+     users: {
+       admin: { username: 'admin', password: process.env.ADMIN_PASSWORD },
+       customer: { email: 'customer@example.com', password: process.env.CUSTOMER_PASSWORD, name: 'Casey Customer' },
+     },
+   },
+   ```
+
+3. Copy a feature file from [`tests/features/`](tests/features/) into your
+   project and adjust the products, categories and texts to your catalog.
+
+4. Run the suite:
+
+   ```bash
+   npx cucumber-js
+   ```
+
+## What is included
+
+| Path | Purpose |
+| --- | --- |
+| `tests/step-definitions/magento.steps.js` | Both sides: messages, confirmation dialogs, the settled wait. |
+| `tests/step-definitions/magento-admin.steps.js` | Admin panel: session, named pages, page title, menu, access denied, page buttons, grids, forms, tabs. |
+| `tests/step-definitions/magento-admin-content.steps.js` | Admin content: products, the category tree, orders, customers, configuration, cache and index, clean-up. |
+| `tests/step-definitions/magento-storefront.steps.js` | Storefront: customer session, menu, breadcrumbs, product list, search, product page, mini cart, cart, checkout, account, wish list, compare, reviews, newsletter, field errors. |
+| `tests/step-definitions/magento-helpers.js` | Shared plumbing. It registers no step. |
+| `tests/features/*.feature` | Reference features for a store with the sample data. |
+| `tests/features/90-assertions-must-fail.feature` | Scenarios that state something false: `npm run test:must-fail` passes only when every one of them fails with a helpful message. |
+| `scripts/build-site.sh`, `scripts/site-accounts.php` | Build the test store with DDEV and create the test accounts. |
+| `tests/check-examples.js` | Checks every `Example #n:` line and every feature step against the step patterns. |
+
+## Steps
+
+126 step definitions. The JSDoc block above each one holds five examples.
+
+### Both sides
+
+```gherkin
+Then I should see the success message "You saved the product."
+Then I should not see an error message
+Then I should see the confirmation "Are you sure you want to delete this category?"
+When I confirm the action
+When I dismiss the confirmation
+When I wait for the page to settle
+```
+
+### Admin panel: session, pages, menu
+
+```gherkin
+Given I am logged in to the admin panel as "admin"
+When I log in to the admin panel with the username "admin" and the password "wrong-password"
+When I log out of the admin panel
+Given I am not logged in to the admin panel
+Then I should be logged in to the admin panel as "sales"
+When I go to the "products" admin page
+Then the admin page title should be "Products"
+Then I should see the "Sales > Orders" admin menu
+When I open the "Catalog > Products" admin menu item
+Then I should see the access denied page
+When I click the "Add New Page" page action
+```
+
+Named pages: dashboard, orders, invoices, shipments, credit memos, products, new
+product, categories, customers, customer groups, cart price rules, new cart
+price rule, catalog price rules, newsletter subscribers, reviews, pending
+reviews, pages, new page, blocks, configuration, cache management, index
+management, users, roles, product attributes, order statuses, my account; or a
+route such as `sales/order`.
+
+### Admin panel: grids
+
+```gherkin
+When I search the grid for "Joust Duffle Bag"
+When I filter the grid by "Type" with "Configurable Product"
+When I clear the grid filters
+Then the grid should show 19 records
+Then the grid should have 20 rows
+Then I should see the "Joust Duffle Bag" grid row
+Then the "Status" column of the "Joust Duffle Bag" grid row should be "Enabled"
+When I sort the grid by "Name" ascending
+Then the grid should be sorted by "Name" ascending
+When I go to the next page of the grid
+Then the grid should be on page 2
+When I show 50 grid rows per page
+When I select the "WS-TEST-BAG" grid row
+When I run the "Change status > Disable" grid action
+When I open the "Home Page" grid row
+```
+
+The steps work on both kinds of grid of the admin panel: the listing with a
+keyword search and a Filters panel (products, orders, customers, pages) and the
+older grid with a filter row (cart price rules, reviews, newsletter
+subscribers, cache, index).
+
+### Admin panel: forms
+
+```gherkin
+When I set the "Product Name" form field to "Test Bag"
+When I set the "Visibility" form field to "Catalog, Search"
+When I turn the "Enable Product" form switch off
+Then the "SKU" form field should be "TEST-SKU-1"
+When I choose "Bags" in the "Categories" form field
+When I open the "Images And Videos" form section
+When I open the "Account Information" admin tab
+Then I should see the form error "This is a required field." for the "Product Name" field
+When I save the form
+```
+
+### Admin panel: catalog, orders, customers, settings
+
+```gherkin
+When I open the product "24-MB01" in the admin panel
+When I add the image "pixel.png" to the product gallery
+Then the product gallery should have 1 image
+When I select the "Gear" category in the tree
+Then I should see the "Bags" category in the tree
+When I open the last placed order in the admin panel
+Then I should see the last placed order in the orders grid
+Then the order status should be "Pending"
+When I add the order comment "Checked by the test suite"
+When I put the order on hold
+When I invoice the order
+When I ship the order
+When I refund the order
+When I cancel the order
+When I open the customer "customer@example.com" in the admin panel
+When I go to the "general" configuration section
+When I set the "Store Name" configuration field of "Store Information" to "Test Store"
+Then some cache types should be invalidated
+When I flush the cache
+Then no cache type should be invalidated
+When I rebuild the invalid indexes
+Then every index should be ready
+Given there is no product "TEST-SKU-1"
+Given there is no category "Test Category"
+```
+
+`there is no …` deletes what it finds, through the admin panel: a product, a
+customer, a page, a block, a cart price rule, a review, a newsletter subscriber
+or a category. It is how a scenario removes what it created.
+
+### Storefront
+
+```gherkin
+Given I am logged in as the customer "customer"
+When I log out of the store
+Then I should be logged in to the store as "Casey Customer"
+When I open the "Gear > Bags" store menu item
+Then the breadcrumbs should be "Home > Gear > Bags"
+Then the product list should have 14 products
+When I filter the product list by "Activity" with "Yoga"
+When I sort the product list by "Price"
+When I set the product list direction to descending
+Then the product list should be ordered by price descending
+When I view the product list as a list
+When I go to the next page of the product list
+When I search the store for "yoga"
+When I type "yog" in the store search
+Then I should see the search suggestion "yoga"
+When I choose the "Size" option "M"
+When I set the product quantity to 2
+When I add the product to the cart
+When I open the "Reviews" product tab
+Then the mini cart should show 2 items
+When I go to the cart
+When I change the cart quantity of "Joust Duffle Bag" to 3
+Then the cart order total should be "$117.00"
+When I apply the coupon "TEST10"
+When I estimate shipping to "United States", "Texas", "78701"
+When I choose the "Flat Rate" shipping method
+When I go to the checkout
+When I fill in the checkout email with "guest@example.com"
+When I fill in the shipping address:
+When I continue to the payment step
+When I choose the "Check / Money order" payment method
+When I place the order
+Then I should see the order confirmation
+Then my order history should list the last placed order as "Pending"
+When I add the address:
+Then my address book should contain "9 Test Road"
+When I add the product to my wish list
+When I add the product to the comparison list
+When I review the product with 4 stars, the summary "Good bag" and the text "It holds everything."
+When I subscribe "reader@example.com" to the newsletter
+Then I should see the field error "This is a required field." for "First Name"
+```
+
+`I place the order` remembers the order number of the success page: "the last
+placed order" is then found in the orders grid of the admin panel and in the
+order history of the customer, in the same scenario.
+
+## Accounts
+
+The accounts are configuration, not test data. They are named in
+`worldParameters.users` of `cucumber.js` and created once on the site; a
+feature never creates or deletes one of them.
+
+| Handle | Kind | What it is |
+| --- | --- | --- |
+| `admin` | admin user (`username`) | An administrator with every resource. |
+| `sales` | admin user (`username`) | An admin user with a role that allows Sales only. |
+| `customer` | customer (`email`) | A customer with a default billing and shipping address. |
+| `shopper` | customer (`email`) | A second customer with an address. |
+
+A customer that a scenario registers is content: the scenario removes it
+(`Given there is no customer "…"`). Orders cannot be deleted in the admin
+panel: every run leaves its orders behind, closed or cancelled.
+
+## The test store
+
+`scripts/build-site.sh` builds the store the suite runs against, without a
+question asked, in one DDEV project (`magentosteps`,
+`https://magentosteps.ddev.site`):
+
+```bash
+scripts/build-site.sh          # the site goes to ../magento-site, or to $SITE_DIR
+npm test
+```
+
+- **Edition.** Magento Open Source 2.4.9 (`magento/project-community-edition`),
+  PHP 8.4, MariaDB 11.4, OpenSearch 3 through the `ddev/ddev-opensearch` add-on
+  (its dashboards service is left out), the sample data.
+- **Where the packages come from.** The build uses the public Mage-OS mirror of
+  the Magento Open Source packages, `https://mirror.mage-os.org/`. It serves
+  the same releases as the vendor's repository without access keys, so the
+  build needs no account anywhere. `MIRROR_URL` points it at another Composer
+  repository.
+- **Mode.** Production mode with the static content deployed: the pages answer
+  fast and the same way every time, which a test suite needs. On this
+  hardware compiling and deploying takes about 30 seconds.
+- **Two-factor authentication is off.** The build disables the modules
+  `Magento_TwoFactorAuth` and `Magento_AdminAdobeImsTwoFactorAuth`, the
+  supported way to log in to a local test site without a second factor. Never
+  do this on a site that is on the internet.
+- **Nothing calls out.** The admin notification feed, the usage-data question
+  and the release notification are disabled (`Magento_AdminNotification`,
+  `Magento_AdminAnalytics`, `Magento_ReleaseNotification`), as are the CAPTCHAs.
+  With the notification module off the admin panel has no system message bar:
+  the suite reads the cache and index state on Cache Management and Index
+  Management instead.
+- **Deterministic sign-in.** The admin session lasts, the secret key in admin
+  addresses is off (`admin/security/use_form_key`), one admin account may be
+  used from two browsers (`admin/security/admin_account_sharing`), no account is
+  locked after failed sign-ins.
+- **Indexes.** The indexers run on "Update on Save": a product a scenario saves
+  is in the store at once and no cron is needed. Cron is run once by the build
+  and is not left running.
+- **Methods.** Check / Money order, Flat Rate, Free Shipping and the table rate
+  of the sample data: the offline methods the edition ships with. No payment
+  gateway, no carrier API.
+- **Mail** goes to DDEV's Mailpit.
+
+Footprint, measured: about 1.9 GB of memory for the three containers (web 550
+MB, database 310 MB, search 1 GB), 1.4 GB for the project folder, 3.5 GB of
+container images.
+
+## What the pages really do
+
+Things the browser round showed, which the steps are built on:
+
+- A page is "loaded" long before it works. `document.readyState` is `complete`
+  about 60 ms in, while RequireJS still loads 20 to 130 modules and the init
+  blocks are unprocessed; a "Sort By" change made then is swallowed. The steps
+  wait for the settled signal instead: no requested RequireJS module pending,
+  no `text/x-magento-init` block left, no request in flight, no loading mask,
+  three readings in a row.
+- The admin forms are KnockoutJS models that read an input on its `change`
+  event. A value typed with Playwright's `fill()` shows in the field while the
+  form still holds nothing, and Save answers "This is a required field.". The
+  form steps fill, dispatch `change` and read the value back.
+- Labels are not always the accessible name. Several admin selects carry
+  `aria-label="notice-…"`; on the customer sign-in page the "Password" label
+  points at the field of a hidden popup. The steps find a field by the label
+  text of its wrapper.
+- An admin grid keeps a hidden copy of its header first in the DOM, remembers
+  its filters, sorting and page size for the admin user, and saves them two
+  seconds after a change. A grid opened by name starts unfiltered; the steps
+  that set what must not leak wait for the save.
+- The checkout shows its fields under a loading mask for a second; the star
+  labels of the review form lie on top of each other; the "Remove item" link of
+  the wish list shows on hover only; the store redirects to the home page five
+  seconds after a customer logs out.
+
+## Checks
+
+```bash
+npm test                 # the whole suite (not the @must-fail scenarios)
+npm run test:admin       # the admin panel lane
+npm run test:storefront  # the storefront lane
+npm run test:must-fail   # every false statement must fail with a helpful message
+npm run test:examples    # the JSDoc examples and the feature steps against the patterns
+npm run test:dry         # undefined and ambiguous steps
+```
+
+The suite leaves the site as it found it, apart from the orders: run it twice
+in a row.
+
+## What is not covered
+
+- The paid edition and its features, B2B, marketplace extensions, payment gateways and
+  carrier services: this pack is for the community edition and its offline
+  methods.
+- The Page Builder stage (drag and drop): a page is created with its title,
+  heading and URL key; its body is not edited.
+- The cookie restriction notice (off in a default installation), multiple
+  websites, stores and currencies, other languages than English, other themes
+  than the default ones, the mobile menu.
+- The "Comments History" tab of an order: it stays empty in 2.4.9; the suite
+  reads the notes on the Information tab.
+- Moving a category in the tree, bundle, grouped, virtual and downloadable
+  products, creating an order in the admin panel, tax rules.
+
+## License
+
+MIT

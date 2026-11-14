@@ -1,0 +1,68 @@
+{
+  "name": "@webship-js/magento-steps",
+  "version": "2.0.0",
+  "description": "Cucumber step definitions for testing Magento Open Source stores with webship-js: the admin panel (session, menu, grids, forms, catalog, orders, customers, cart price rules, content, configuration, cache and index, permissions) and the storefront (catalog, layered navigation, search, product page, cart, checkout, customer account, wish list, compare, reviews, newsletter).",
+  "main": "tests/step-definitions/magento.steps.js",
+  "files": [
+    "tests/step-definitions/*.js",
+    "tests/step-definitions/README.md",
+    "tests/features",
+    "tests/fixtures",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "cucumber-js --config cucumber.js",
+    "test:dry": "cucumber-js --config cucumber.js --dry-run",
+    "test:admin": "CUCUMBER_TAGS='@admin and not @wip and not @must-fail' cucumber-js --config cucumber.js",
+    "test:storefront": "CUCUMBER_TAGS='@storefront and not @wip and not @must-fail' cucumber-js --config cucumber.js",
+    "test:must-fail": "node tests/check-must-fail.js",
+    "test:chromium": "BROWSER=chromium cucumber-js --config cucumber.js",
+    "test:firefox": "BROWSER=firefox cucumber-js --config cucumber.js",
+    "test:webkit": "BROWSER=webkit cucumber-js --config cucumber.js",
+    "test:headed": "HEADLESS=false cucumber-js --config cucumber.js",
+    "test:examples": "node tests/check-examples.js",
+    "generate-reports": "generate-reports"
+  },
+  "keywords": [
+    "magento",
+    "magento2",
+    "magento-open-source",
+    "e-commerce",
+    "webship-js",
+    "cucumber",
+    "cucumber-js",
+    "playwright",
+    "bdd",
+    "testing",
+    "e2e",
+    "gherkin"
+  ],
+  "author": "Webship.co",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webship/magento-steps.git"
+  },
+  "bugs": {
+    "url": "https://github.com/webship/magento-steps/issues"
+  },
+  "homepage": "https://github.com/webship/magento-steps#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">= 20.0"
+  },
+  "peerDependencies": {
+    "webship-js": "^2.0.10"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.0",
+    "webship-js": "^2.0.10"
+  },
+  "overrides": {
+    "@cucumber/cucumber": "^12"
+  }
+}
