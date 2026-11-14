@@ -209,7 +209,15 @@ async function settle(world, timeout) {
  * @param {string} url
  */
 async function open(world, url) {
-  await gotoUrl(world.page, url);
+  try {
+    await gotoUrl(world.page, url);
+  } catch (err) {
+    // The browser drops a request when the network of the machine changes under
+    // it (a container network coming or going on a shared host) and asks for
+    // the page to be loaded again: do that once.
+    if (!/ERR_NETWORK_CHANGED/.test(String(err && err.message))) throw err;
+    await gotoUrl(world.page, url);
+  }
   await settle(world);
 }
 
