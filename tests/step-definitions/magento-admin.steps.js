@@ -76,6 +76,8 @@ async function submitAdminLogin(world, username, password) {
     await page.locator('#login').fill(password);
   }, 'The sign-in form (`#username`, `#login`) did not show: check `adminPath` in cucumber.js against the admin address of the site.');
   await actAndSettle(world, () => page.locator('.action-login').click());
+  // The sign-in ends in one of two ways: the admin header, or an error on the form.
+  await page.locator('.admin-user .admin-user-account-text, .login-content .messages .message').first().waitFor({ state: 'visible', timeout: budget(world) }).catch(() => {});
 }
 
 /**

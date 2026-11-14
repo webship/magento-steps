@@ -28,10 +28,12 @@
 # What this build turns off, because a test site must not ask a person for a
 # code or call anything outside:
 #   - two-factor authentication for admins (the modules Magento_TwoFactorAuth
-#     and Magento_AdminAdobeImsTwoFactorAuth are disabled). Never do this on a
+#     and Magento_AdminAdobeImsTwoFactorAuth are not installed). Never do this on a
 #     site that is on the internet.
 #   - the admin notification feed, the usage-data question, the release
 #     notification, the CAPTCHAs, the secret key in admin addresses.
+#   - the bundled payment gateway and data-export extensions, which make the
+#     storefront load scripts from outside servers even when not configured.
 set -euo pipefail
 
 MAGENTO_VERSION="${MAGENTO_VERSION:-2.4.9}"
@@ -92,8 +94,31 @@ if [ ! -f composer.json ]; then
     "magento/project-community-edition:$MAGENTO_VERSION" . --no-interaction --prefer-dist
 fi
 
+# Modules a test store never installs. They are left out at install time (not
+# disabled afterwards): a module disabled after the install leaves its database
+# triggers behind, and the next order fails on a column that is gone.
+#   - two-factor authentication, and what asks the admin user questions or
+#     fetches a feed;
+#   - the payment gateway and data-export extensions bundled with the edition.
+#     They are not configured, yet with them every storefront page loads two
+#     scripts from the gateway's servers (for a message in the mini cart) and the
+#     checkout loads an asset of the payment provider. A test store calls nothing
+#     outside: the suite uses the offline methods (check / money order, flat
+#     rate, free shipping).
+DISABLED_MODULES="Magento_AdminAdobeImsTwoFactorAuth,Magento_TwoFactorAuth,\
+Magento_AdminNotification,Magento_AdminAnalytics,Magento_ReleaseNotification,\
+PayPal_Braintree,PayPal_BraintreeCustomerBalance,PayPal_BraintreeGiftCard,PayPal_BraintreeGiftCardAccount,\
+PayPal_BraintreeGiftWrapping,PayPal_BraintreeGraphQl,PayPal_BraintreeReward,\
+Magento_PaymentServicesBase,Magento_PaymentServicesDashboard,Magento_PaymentServicesPaypal,\
+Magento_PaymentServicesPaypalGraphQl,Magento_PaymentServicesSaaSExport,Magento_ServiceProxy,\
+Magento_ServicesConnector,Magento_ServicesId,Magento_ServicesIdGraphQlServer,Magento_ServicesIdLayout,\
+Magento_SaaSCommon,Magento_DataExporter,Magento_SalesDataExporter,Magento_StoreDataExporter"
+
 step "Install"
+# A rebuild starts from nothing: the old configuration and the generated files go.
+rm -rf app/etc/env.php app/etc/config.php generated/code generated/metadata var/cache var/page_cache var/view_preprocessed pub/static/frontend pub/static/adminhtml pub/static/deployed_version.txt
 ddev exec </dev/null "php bin/magento setup:install \
+  --disable-modules='$DISABLED_MODULES' \
   --base-url='$SITE_URL/' --base-url-secure='$SITE_URL/' --use-secure=1 --use-secure-admin=1 --use-rewrites=1 \
   --db-host=db --db-name=db --db-user=db --db-password=db \
   --search-engine=opensearch --opensearch-host=opensearch --opensearch-port=9200 \
@@ -103,11 +128,6 @@ ddev exec </dev/null "php bin/magento setup:install \
   --admin-email=admin@example.com --admin-firstname=Site --admin-lastname=Admin \
   --language=en_US --currency=USD --timezone=UTC \
   --session-save=files --cleanup-database --no-interaction"
-
-step "Modules a test site turns off"
-ddev exec </dev/null "php bin/magento module:disable \
-  Magento_AdminAdobeImsTwoFactorAuth Magento_TwoFactorAuth \
-  Magento_AdminNotification Magento_AdminAnalytics Magento_ReleaseNotification"
 
 if [ "$SAMPLE_DATA" = "1" ]; then
   step "Sample data"
