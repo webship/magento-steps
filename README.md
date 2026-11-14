@@ -373,6 +373,13 @@ npm run test:dry         # undefined and ambiguous steps
 The suite leaves the site as it found it, apart from the orders: run it twice
 in a row.
 
+`BROWSER=firefox npm test` runs the suite in Firefox (`npx playwright install
+firefox` once). Use it on a machine where other container projects start and
+stop while the suite runs: Chromium aborts every request in flight with
+`net::ERR_NETWORK_CHANGED` when a container network comes or goes, and Firefox
+is started here with `network.notify.changed` off. `CUCUMBER_RETRY=1` runs a
+failed scenario once more.
+
 ## What is not covered
 
 - The paid edition and its features, B2B, marketplace extensions, payment gateways and

@@ -68,7 +68,7 @@ When(/^(I |we )*open the product "([^"]*)" in the admin panel$/, async function 
   const count = await g.rows.count();
   for (let i = 0; i < count; i += 1) {
     if (clean(await g.rows.nth(i).locator(':scope > td').nth(index).innerText()) === sku) {
-      await actAndSettle(this, () => g.rows.nth(i).locator('td.data-grid-actions-cell a').first().click());
+      await actAndSettle(this, () => g.rows.nth(i).locator('td.data-grid-actions-cell a').first().click({ noWaitAfter: true }));
       // The keyword must not stay behind for the next visit of the grid.
       return;
     }
@@ -188,7 +188,7 @@ When(/^(I |we )*select the "([^"]*)" category in the tree$/, async function (pro
     const all = await this.page.locator('#tree-div a.jstree-anchor').allInnerTexts();
     throw friendly({ message: `The category tree has no "${name}". It holds: ${all.map((text) => clean(text).replace(/\s+\(ID:.*$/, '')).join(', ')}.`, hint: 'Use the category name without its "(ID: n)" suffix.' });
   }
-  await actAndSettle(this, () => node.click());
+  await actAndSettle(this, () => node.click({ noWaitAfter: true }));
   await assertValue(this, () => this.page.locator('h1.page-title').first().innerText(), new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\(ID: \\d+\\)$'), {
     label: 'the title of the category form',
     hint: 'The form of the selected category shows its name and id as the page title.',
@@ -373,13 +373,13 @@ async function orderOperation(world, name) {
       hint: 'The buttons follow the state of the order: an invoice is needed before a credit memo, a shipped and invoiced order is complete.',
     });
   }
-  await actAndSettle(world, () => button.click());
+  await actAndSettle(world, () => button.click({ noWaitAfter: true }));
   if (operation.confirm) await answerDialog(world, true);
   if (operation.submit) {
     const submit = page.locator(operation.submit).first();
     await submit.waitFor({ state: 'visible', timeout: budget(world) });
     await settle(world);
-    await actAndSettle(world, () => submit.click());
+    await actAndSettle(world, () => submit.click({ noWaitAfter: true }));
   }
   await assertPresence(messages(world, 'success', operation.message), null, {
     label: `the message "${operation.message}"`,
@@ -608,7 +608,7 @@ Then(/^(no|some) cache types? should be invalidated$/, async function (quantity)
  */
 When(/^(I |we )*flush the cache$/, async function (pronounCase) {
   await openAdmin(this, adminRoute('cache management'), 'cache management');
-  await actAndSettle(this, () => this.page.locator('#flush_magento').click());
+  await actAndSettle(this, () => this.page.locator('#flush_magento').click({ noWaitAfter: true }));
   await assertPresence(messages(this, 'success', 'cache storage has been flushed'), null, {
     label: 'the message that the cache was flushed',
     hint: 'The button is "Flush Magento Cache" (`#flush_magento`).',
@@ -731,7 +731,7 @@ async function removeRecords(world, kind, text) {
       await answerDialog(world, true);
     } else {
       await openGridRow(world, text);
-      await actAndSettle(world, () => page.locator('.page-main-actions:visible').first().locator('#delete').click());
+      await actAndSettle(world, () => page.locator('.page-main-actions:visible').first().locator('#delete').click({ noWaitAfter: true }));
       await answerDialog(world, true);
     }
     await messages(world, 'success').first().waitFor({ state: 'visible', timeout: budget(world) }).catch(async () => {
@@ -784,8 +784,8 @@ Given(/^there is no category "([^"]*)"$/, async function (name) {
     await openCategoryTree(this);
     const node = categoryNode(this, name).first();
     if (!(await node.count())) return;
-    await actAndSettle(this, () => node.click());
-    await actAndSettle(this, () => this.page.locator('.page-main-actions:visible').first().locator('#delete').click());
+    await actAndSettle(this, () => node.click({ noWaitAfter: true }));
+    await actAndSettle(this, () => this.page.locator('.page-main-actions:visible').first().locator('#delete').click({ noWaitAfter: true }));
     await answerDialog(this, true);
     await assertPresence(messages(this, 'success', 'You deleted the category.'), null, {
       label: 'the message "You deleted the category."',

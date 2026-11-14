@@ -227,7 +227,9 @@ async function open(world, url) {
  * old page still looks settled, so the navigation itself is watched: when the
  * action starts a main-frame navigation request, the step waits until that
  * page has arrived. Nothing is required: the same step works for an AJAX
- * action.
+ * action. The clicks passed in carry `noWaitAfter`: this helper does the
+ * waiting, and Playwright's own wait after a click now and then never returns
+ * in Firefox although the page has arrived.
  *
  * @param {object} world
  * @param {Function} action
@@ -425,7 +427,7 @@ async function answerDialog(world, accept) {
     });
   }
   const button = box.locator(accept ? 'button.action-accept' : 'button.action-dismiss').first();
-  await actAndSettle(world, () => button.click());
+  await actAndSettle(world, () => button.click({ noWaitAfter: true }));
 }
 
 // ---------------------------------------------------------------------------
@@ -635,7 +637,7 @@ async function clearGrid(world) {
   const reset = g.wrap.locator('button[data-action="grid-filter-reset"]').first();
   const filled = await g.table.locator('thead tr.data-grid-filters').locator('input[type="text"], select').evaluateAll((controls) => controls.some((control) => control.value !== ''));
   if (filled && await reset.count()) {
-    await actAndSettle(world, () => reset.click());
+    await actAndSettle(world, () => reset.click({ noWaitAfter: true }));
   }
 }
 
@@ -726,7 +728,7 @@ async function filterGrid(world, label, value) {
   } else {
     await control.fill(value);
   }
-  await actAndSettle(world, () => g.wrap.locator('button[data-action="grid-filter-apply"]').first().click());
+  await actAndSettle(world, () => g.wrap.locator('button[data-action="grid-filter-apply"]').first().click({ noWaitAfter: true }));
 }
 
 /**
@@ -771,7 +773,7 @@ async function runGridAction(world, action) {
         });
       }
       const last = i === path.length - 1;
-      if (last) await actAndSettle(world, () => item.locator(':scope > .action-menu-item').click());
+      if (last) await actAndSettle(world, () => item.locator(':scope > .action-menu-item').click({ noWaitAfter: true }));
       else await item.locator(':scope > .action-menu-item').click();
       scope = item.locator(':scope > ul.action-submenu');
     }
@@ -782,7 +784,7 @@ async function runGridAction(world, action) {
     throw friendly({ message: 'This grid has no "Actions" control.', hint: 'Open the row and use the buttons of its page instead.' });
   }
   await select.selectOption({ label: path[0] });
-  await actAndSettle(world, () => g.wrap.locator('[id$="_massaction"] button', { hasText: /Submit/ }).first().click());
+  await actAndSettle(world, () => g.wrap.locator('[id$="_massaction"] button', { hasText: /Submit/ }).first().click({ noWaitAfter: true }));
 }
 
 /**
@@ -803,16 +805,16 @@ async function openGridRow(world, text) {
   }
   const direct = row.locator('td.data-grid-actions-cell > a.action-menu-item, td a', { hasText: /^\s*(Edit|View)\s*$/ }).first();
   if (await direct.count() && await direct.isVisible()) {
-    await actAndSettle(world, () => direct.click());
+    await actAndSettle(world, () => direct.click({ noWaitAfter: true }));
     return;
   }
   const menu = row.locator('button.action-select').first();
   if (await menu.count()) {
     await menu.click();
-    await actAndSettle(world, () => row.locator('a[data-action="item-edit"], ul.action-menu a.action-menu-item').first().click());
+    await actAndSettle(world, () => row.locator('a[data-action="item-edit"], ul.action-menu a.action-menu-item').first().click({ noWaitAfter: true }));
     return;
   }
-  await actAndSettle(world, () => row.locator('td', { hasText: literal(text) }).first().click());
+  await actAndSettle(world, () => row.locator('td', { hasText: literal(text) }).first().click({ noWaitAfter: true }));
 }
 
 // ---------------------------------------------------------------------------

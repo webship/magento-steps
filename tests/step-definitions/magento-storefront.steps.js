@@ -78,7 +78,7 @@ async function submitCustomerLogin(world, email, password) {
     await form.locator('input[name="login[username]"]').fill(email, { timeout: budget(world) });
     await form.locator('input[name="login[password]"]').fill(password);
   }, 'The sign-in form is `.login-container` on /customer/account/login/.');
-  await actAndSettle(world, () => form.locator('button.login').click());
+  await actAndSettle(world, () => form.locator('button.login').click({ noWaitAfter: true }));
   // The sign-in ends in one of two ways: the customer menu of the header, or a message.
   await page.locator('.page-header .customer-welcome, .page.messages .message').first().waitFor({ state: 'visible', timeout: budget(world) }).catch(() => {});
 }
@@ -205,7 +205,7 @@ When(/^(I |we )*open the "([^"]*)" store menu item$/, async function (pronounCas
       const link = item.locator(':scope > a');
       await link.waitFor({ state: 'visible', timeout: budget(this) });
       if (i === parts.length - 1) {
-        await actAndSettle(this, () => link.click());
+        await actAndSettle(this, () => link.click({ noWaitAfter: true }));
       } else {
         await link.hover();
         scope = item.locator(':scope > ul.submenu');
@@ -313,7 +313,7 @@ When(/^(I |we )*open the product "([^"]*)" from the product list$/, async functi
   const link = this.page.locator('.products.wrapper .product-item-link').filter({ hasText: exactly(name) }).first();
   await actOrExplain('open the product', name, async () => {
     await link.waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => link.click());
+    await actAndSettle(this, () => link.click({ noWaitAfter: true }));
   }, LIST_HINT + ' The product must be on the current page of the list.');
 });
 
@@ -452,7 +452,7 @@ When(/^(I |we )*go to (?:the (next|previous) page|page (\d+)) of the product lis
   if (!(await link.count())) {
     throw friendly({ message: `The product list has no ${direction ? direction + ' page' : 'page ' + number}.`, hint: 'The pager shows only when the list has more products than fit on a page.' });
   }
-  await actAndSettle(this, () => link.first().click());
+  await actAndSettle(this, () => link.first().click({ noWaitAfter: true }));
 });
 
 /**
@@ -495,7 +495,7 @@ When(/^(I |we )*filter the product list by "([^"]*)" with "([^"]*)"$/, async fun
     if ((await title.getAttribute('aria-expanded')) !== 'true') await title.click();
     const link = title.locator('xpath=following-sibling::*[1]').locator('a').filter({ hasText: new RegExp('^\\s*' + escapeRegExp(option) + '(\\s|$)') }).first();
     await link.waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => link.click());
+    await actAndSettle(this, () => link.click({ noWaitAfter: true }));
   }, 'Use the option text as the filter shows it, without its count.');
 });
 
@@ -541,7 +541,7 @@ When(/^(I |we )*clear the product list filters$/, async function (pronounCase) {
   if (!(await clear.count())) {
     throw friendly({ message: 'The product list has no filter in use, so there is no "Clear All".', hint: 'Filter the list first: `When I filter the product list by "Activity" with "Yoga"`.' });
   }
-  await actAndSettle(this, () => clear.click());
+  await actAndSettle(this, () => clear.click({ noWaitAfter: true }));
 });
 
 // ---------------------------------------------------------------------------
@@ -770,7 +770,7 @@ When(/^(I |we )*open the "([^"]*)" product tab$/, async function (pronounCase, n
     throw friendly({ message: `The product page has no "${name}" tab. Its tabs: ${all.map(clean).join(', ') || '(none)'}.`, hint: 'Use the tab name without the counter ("Reviews", not "Reviews 4").' });
   }
   if ((await tab.getAttribute('aria-expanded')) !== 'true') {
-    await actAndSettle(this, () => tab.locator('a.data.switch').click());
+    await actAndSettle(this, () => tab.locator('a.data.switch').click({ noWaitAfter: true }));
   }
   await assertValue(this, () => tab.getAttribute('aria-expanded'), 'true', { label: `the state of the "${name}" tab`, hint: 'The open tab carries `aria-expanded="true"`.' });
   await settle(this);
@@ -905,7 +905,7 @@ Given(/^(?:my|our) cart is empty(?: now)?$/, async function () {
   for (let i = 0; i < 50; i += 1) {
     const line = cartLines(this).first();
     if (!(await line.count())) return;
-    await actAndSettle(this, () => line.locator('a.action-delete').click());
+    await actAndSettle(this, () => line.locator('a.action-delete').click({ noWaitAfter: true }));
   }
   throw friendly({ message: 'The cart still holds products after 50 removals.', hint: 'Remove the lines by hand and check what refuses to go.' });
 });
@@ -948,7 +948,7 @@ When(/^(I |we )*change the cart quantity of "([^"]*)" to (\d+)$/, async function
   const line = cartLines(this, name).first();
   await actOrExplain('change the cart quantity of', name, async () => {
     await line.locator('input[data-role="cart-item-qty"]').fill(String(quantity), { timeout: budget(this) });
-    await actAndSettle(this, () => this.page.locator('.cart.main.actions button.action.update').click());
+    await actAndSettle(this, () => this.page.locator('.cart.main.actions button.action.update').click({ noWaitAfter: true }));
   }, CART_HINT + ' The product must be in the cart.');
 });
 
@@ -985,7 +985,7 @@ When(/^(I |we )*remove "([^"]*)" from the cart$/, async function (pronounCase, n
   const line = cartLines(this, name).first();
   await actOrExplain('remove from the cart', name, async () => {
     await line.locator('a.action-delete').waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => line.locator('a.action-delete').click());
+    await actAndSettle(this, () => line.locator('a.action-delete').click({ noWaitAfter: true }));
   }, CART_HINT + ' The product must be in the cart.');
 });
 
@@ -1029,7 +1029,7 @@ When(/^(I |we )*apply the coupon "([^"]*)"$/, async function (pronounCase, code)
   await actOrExplain('apply the coupon', code, async () => {
     if (!(await field.isVisible())) await this.page.locator('#block-discount-heading').click();
     await field.fill(code, { timeout: budget(this) });
-    await actAndSettle(this, () => this.page.locator('#discount-coupon-form button.action.apply').click());
+    await actAndSettle(this, () => this.page.locator('#discount-coupon-form button.action.apply').click({ noWaitAfter: true }));
   }, CART_HINT + ' A coupon that is already applied must be cancelled first.');
 });
 
@@ -1050,7 +1050,7 @@ When(/^(I |we )*cancel the coupon$/, async function (pronounCase) {
     throw friendly({ message: 'The cart has no coupon to cancel.', hint: 'Apply one first: `When I apply the coupon "…"`.' });
   }
   if (!(await cancel.isVisible())) await this.page.locator('#block-discount-heading').click();
-  await actAndSettle(this, () => cancel.click());
+  await actAndSettle(this, () => cancel.click({ noWaitAfter: true }));
 });
 
 /**
@@ -1446,7 +1446,7 @@ When(/^(I |we )*add the address:$/, async function (pronounCase, table) {
       else await control.fill(value, { timeout: budget(this) });
     }, 'Use the country and the state as the selects name them.');
   }
-  await actAndSettle(this, () => form.locator('button.action.save').click());
+  await actAndSettle(this, () => form.locator('button.action.save').click({ noWaitAfter: true }));
 });
 
 /**
@@ -1535,7 +1535,7 @@ When(/^(I |we )*add the product to (?:(?:my|our) (wish) list|the comparison list
   const link = this.page.locator(wish ? '.product-info-main a.action.towishlist' : '.product-info-main a.action.tocompare').first();
   await actOrExplain('add the product to', wish ? 'the wish list' : 'the comparison list', async () => {
     await link.waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => link.click());
+    await actAndSettle(this, () => link.click({ noWaitAfter: true }));
     await messages(this).first().waitFor({ state: 'visible', timeout: budget(this) });
   }, 'The links are next to "Add to Cart" on a product page. A guest who adds to the wish list is sent to the sign-in page.');
   await settle(this);
@@ -1582,7 +1582,7 @@ When(/^(I |we )*remove "([^"]*)" from (?:my|our) wish list$/, async function (pr
     await item.hover();
     const remove = item.locator('a[data-role="remove"]');
     await remove.waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => remove.click());
+    await actAndSettle(this, () => remove.click({ noWaitAfter: true }));
   }
 });
 
@@ -1668,7 +1668,7 @@ When(/^(I |we )*review the product (?:with (\d) stars?|without a rating), the su
     if (nickname) await form.locator('#nickname_field').fill(nickname);
     await form.locator('#summary_field').fill(summary);
     await form.locator('#review_field').fill(text);
-    await actAndSettle(this, () => form.locator('button.submit').click());
+    await actAndSettle(this, () => form.locator('button.submit').click({ noWaitAfter: true }));
   }, 'The review form is in the "Reviews" tab of a product page. A guest can review when the store allows it (Stores > Configuration > Catalog > Product Reviews).');
 });
 
@@ -1688,7 +1688,7 @@ When(/^(I |we )*subscribe "([^"]*)" to the newsletter$/, async function (pronoun
   const form = this.page.locator('#newsletter-validate-detail');
   await actOrExplain('subscribe to the newsletter', email, async () => {
     await form.locator('#newsletter').fill(email, { timeout: budget(this) });
-    await actAndSettle(this, () => form.locator('button.subscribe').click());
+    await actAndSettle(this, () => form.locator('button.subscribe').click({ noWaitAfter: true }));
   }, 'The newsletter form is in the footer of every store page.');
 });
 
@@ -1758,7 +1758,7 @@ When(/^(I |we )*press the "([^"]*)" store button$/, async function (pronounCase,
     const all = await this.page.locator('main button:visible').allInnerTexts().catch(() => []);
     throw friendly({ message: `The page has no "${name}" button in its main content. Its buttons: ${[...new Set(all.map(clean).filter(Boolean))].join(', ') || '(none)'}.`, hint: 'Use the text of the button as the form shows it.' });
   }
-  await actAndSettle(this, () => button.click());
+  await actAndSettle(this, () => button.click({ noWaitAfter: true }));
 });
 
 // ---------------------------------------------------------------------------
