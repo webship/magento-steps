@@ -75,7 +75,7 @@ async function submitAdminLogin(world, username, password) {
     await page.locator('#username').fill(username, { timeout: budget(world) });
     await page.locator('#login').fill(password);
   }, 'The sign-in form (`#username`, `#login`) did not show: check `adminPath` in cucumber.js against the admin address of the site.');
-  await actAndSettle(world, () => page.locator('.action-login').click());
+  await actAndSettle(world, () => page.locator('.action-login').click({ noWaitAfter: true }));
   // The sign-in ends in one of two ways: the admin header, or an error on the form.
   await page.locator('.admin-user .admin-user-account-text, .login-content .messages .message').first().waitFor({ state: 'visible', timeout: budget(world) }).catch(() => {});
 }
@@ -145,7 +145,7 @@ When(/^(I |we )*log out of the admin panel$/, async function (pronounCase) {
   }
   await actOrExplain('log out of', 'the admin panel', async () => {
     await page.locator('.admin-user .admin__action-dropdown').click();
-    await actAndSettle(this, () => page.locator('.admin-user a.account-signout').click());
+    await actAndSettle(this, () => page.locator('.admin-user a.account-signout').click({ noWaitAfter: true }));
   }, 'The account menu of the admin header (`.admin-user`) holds the "Sign Out" link.');
 });
 
@@ -299,13 +299,13 @@ When(/^(I |we )*open the "([^"]*)" admin menu item$/, async function (pronounCas
   await actOrExplain('open the admin menu item', path, async () => {
     await top.waitFor({ state: 'visible', timeout: budget(this) });
     if (parts.length === 1) {
-      await actAndSettle(this, () => top.locator(':scope > a').click());
+      await actAndSettle(this, () => top.locator(':scope > a').click({ noWaitAfter: true }));
       return;
     }
     await top.locator(':scope > a').click();
     const item = top.locator('.submenu a').filter({ hasText: exactly(parts[parts.length - 1]) }).first();
     await item.waitFor({ state: 'visible', timeout: budget(this) });
-    await actAndSettle(this, () => item.click());
+    await actAndSettle(this, () => item.click({ noWaitAfter: true }));
   }, 'Write the path as the menu shows it: "Catalog > Products". The menu holds only what the role of the user allows.');
 });
 
@@ -356,7 +356,7 @@ When(/^(I |we )*click the "([^"]*)" page action$/, async function (pronounCase, 
       hint: 'The buttons depend on the state of the record (an invoiced order has no "Invoice" button) and on the role of the user.',
     });
   }
-  await actAndSettle(this, () => button.click());
+  await actAndSettle(this, () => button.click({ noWaitAfter: true }));
 });
 
 // ---------------------------------------------------------------------------
@@ -508,7 +508,7 @@ When(/^(I |we )*sort the grid by "([^"]*)" (ascending|descending)$/, async funct
   for (let click = 0; click < 3; click += 1) {
     if (new RegExp(`(^|\\s)${wanted}(\\s|$)`).test((await head.getAttribute('class')) || '')) return;
     if (g.kind === 'ui') await actAndSaveGridState(this, () => head.click());
-    else await actAndSettle(this, () => head.click());
+    else await actAndSettle(this, () => head.click({ noWaitAfter: true }));
   }
   throw friendly({
     message: `The "${column}" column did not sort ${direction}.`,
@@ -569,7 +569,7 @@ When(/^(I |we )*go to (?:the (next|previous) page|page (\d+)) of the grid$/, asy
     if (await button.isDisabled()) {
       throw friendly({ message: `The grid has no ${direction} page.`, hint: 'The pager button is disabled on the first or the last page.' });
     }
-    await actAndSettle(this, () => button.click());
+    await actAndSettle(this, () => button.click({ noWaitAfter: true }));
     return;
   }
   const input = pager.locator('input').first();
@@ -801,7 +801,7 @@ When(/^(I |we )*open the "([^"]*)" admin tab$/, async function (pronounCase, nam
     const tabs = await this.page.locator('.admin__page-nav-item:visible a.admin__page-nav-link > span:first-child').allInnerTexts().catch(() => []);
     throw friendly({ message: `The page has no "${name}" tab. Its tabs: ${tabs.map(clean).filter(Boolean).join(', ') || '(none)'}.`, hint: 'Use the tab name as the page shows it.' });
   }
-  await actAndSettle(this, () => item.locator('a').first().click());
+  await actAndSettle(this, () => item.locator('a').first().click({ noWaitAfter: true }));
   await assertValue(this, async () => ((await item.getAttribute('class')) || '').match(/_active|ui-tabs-active/) ? 'active' : 'inactive', 'active', {
     label: `the "${name}" tab`,
     hint: 'The active tab carries `_active` or `ui-tabs-active`.',
@@ -852,5 +852,5 @@ When(/^(I |we )*save the form$/, async function (pronounCase) {
     const all = await page.locator('.page-main-actions:visible').first().locator('button:visible').allInnerTexts().catch(() => []);
     throw friendly({ message: `The page has no Save button. Its buttons: ${all.map(clean).filter(Boolean).join(', ') || '(none)'}.`, hint: 'Open a form first (a new or an existing record).' });
   }
-  await actAndSettle(this, () => button.click());
+  await actAndSettle(this, () => button.click({ noWaitAfter: true }));
 });
