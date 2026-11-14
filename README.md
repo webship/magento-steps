@@ -87,7 +87,7 @@ npm install --save-dev @webship-js/magento-steps
 
 ## Steps
 
-126 step definitions. The JSDoc block above each one holds five examples.
+128 step definitions. The JSDoc block above each one holds five examples.
 
 ### Both sides
 
@@ -238,8 +238,15 @@ When I add the product to my wish list
 When I add the product to the comparison list
 When I review the product with 4 stars, the summary "Good bag" and the text "It holds everything."
 When I subscribe "reader@example.com" to the newsletter
+When I fill in the "Password" store field with "Secret123456789!"
+When I press the "Create an Account" store button
 Then I should see the field error "This is a required field." for "First Name"
 ```
+
+Every store page also holds a hidden sign-in popup with an "Email" and a
+"Password" of its own, and the header repeats the texts of several buttons: the
+two `store field` and `store button` steps take the field and the button of
+the form a person sees.
 
 `I place the order` remembers the order number of the success page: "the last
 placed order" is then found in the orders grid of the admin panel and in the
@@ -284,16 +291,28 @@ npm test
 - **Mode.** Production mode with the static content deployed: the pages answer
   fast and the same way every time, which a test suite needs. On this
   hardware compiling and deploying takes about 30 seconds.
-- **Two-factor authentication is off.** The build disables the modules
+- **Two-factor authentication is off.** The build installs without the modules
   `Magento_TwoFactorAuth` and `Magento_AdminAdobeImsTwoFactorAuth`, the
   supported way to log in to a local test site without a second factor. Never
   do this on a site that is on the internet.
 - **Nothing calls out.** The admin notification feed, the usage-data question
-  and the release notification are disabled (`Magento_AdminNotification`,
+  and the release notification are left out (`Magento_AdminNotification`,
   `Magento_AdminAnalytics`, `Magento_ReleaseNotification`), as are the CAPTCHAs.
   With the notification module off the admin panel has no system message bar:
   the suite reads the cache and index state on Cache Management and Index
   Management instead.
+- **The bundled gateway extensions are off.** The edition ships payment gateway
+  and data-export extensions (`PayPal_Braintree*`, `Magento_PaymentServices*`,
+  `Magento_ServiceProxy`, `Magento_Services*`, `Magento_SaaSCommon`,
+  `Magento_*DataExporter`). Not configured, they still made every storefront
+  page load two scripts from the gateway's servers and the checkout an asset of
+  the payment provider (seen in the browser round). The build leaves them out
+  at install time (`setup:install --disable-modules`; disabling them later
+  leaves their database triggers behind and orders fail): the storefront, the
+  checkout and the admin pages the suite opens then request nothing outside
+  the site. One admin page still does, Stores >
+  Configuration > Sales > Payment Methods (a core module); the suite never
+  opens it.
 - **Deterministic sign-in.** The admin session lasts, the secret key in admin
   addresses is off (`admin/security/use_form_key`), one admin account may be
   used from two browsers (`admin/security/admin_account_sharing`), no account is
@@ -307,8 +326,11 @@ npm test
 - **Mail** goes to DDEV's Mailpit.
 
 Footprint, measured: about 1.9 GB of memory for the three containers (web 550
-MB, database 310 MB, search 1 GB), 1.4 GB for the project folder, 3.5 GB of
-container images.
+to 700 MB, database 260 to 310 MB, search 1 GB), 1.4 GB for the project folder,
+3.5 GB of container images. The build takes about three minutes once the
+packages are downloaded (four more for the first download) and under six
+minutes on a GitHub runner; one run of the suite takes about 16 minutes locally
+and 19 minutes on the runner.
 
 ## What the pages really do
 

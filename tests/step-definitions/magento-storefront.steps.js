@@ -79,6 +79,8 @@ async function submitCustomerLogin(world, email, password) {
     await form.locator('input[name="login[password]"]').fill(password);
   }, 'The sign-in form is `.login-container` on /customer/account/login/.');
   await actAndSettle(world, () => form.locator('button.login').click());
+  // The sign-in ends in one of two ways: the customer menu of the header, or a message.
+  await page.locator('.page-header .customer-welcome, .page.messages .message').first().waitFor({ state: 'visible', timeout: budget(world) }).catch(() => {});
 }
 
 /**

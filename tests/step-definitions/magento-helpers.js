@@ -215,17 +215,39 @@ async function open(world, url) {
 
 /**
  * Run an action that may load a new page (a click on a link or a submit
- * button), then wait for the page to settle. The URL change is awaited when it
- * happens, and not required: the same step works for an AJAX action.
+ * button), then wait for the page to settle. While a form is being posted the
+ * old page still looks settled, so the navigation itself is watched: when the
+ * action starts a main-frame navigation request, the step waits until that
+ * page has arrived. Nothing is required: the same step works for an AJAX
+ * action.
  *
  * @param {object} world
  * @param {Function} action
  */
 async function actAndSettle(world, action) {
   const page = world.page;
-  const navigation = page.waitForEvent('framenavigated', { timeout: 1500 }).catch(() => null);
-  await action();
-  await navigation;
+  let started = 0;
+  let arrived = 0;
+  const onRequest = (request) => {
+    // A redirect is a new request of the same navigation: count the first hop only.
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && !request.redirectedFrom()) started += 1;
+  };
+  const onNavigated = (frame) => {
+    if (frame === page.mainFrame()) arrived += 1;
+  };
+  page.on('request', onRequest);
+  page.on('framenavigated', onNavigated);
+  try {
+    await action();
+    // The request of a click starts within a moment of it.
+    const grace = Date.now() + 600;
+    while (!started && !arrived && Date.now() < grace) await page.waitForTimeout(50);
+    const limit = Date.now() + budget(world);
+    while (started > arrived && Date.now() < limit) await page.waitForTimeout(50);
+  } finally {
+    page.off('request', onRequest);
+    page.off('framenavigated', onNavigated);
+  }
   await settle(world);
 }
 
