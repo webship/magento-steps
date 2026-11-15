@@ -2,10 +2,10 @@
 
 | File | Covers |
 | --- | --- |
-| `magento.steps.js` | Both sides: the messages (success, error, warning, notice), the confirmation dialogs, the settled wait. |
 | `magento-admin.steps.js` | The admin panel: log in by account handle, log out, the session, named pages and the page title, the menu, the access denied page, page buttons, grids (keyword search, filters, sorting, paging, page size, row selection, actions, cell values), forms (fields by label, switches, the category chooser, sections, tabs, field errors, save). |
 | `magento-admin-content.steps.js` | Admin content: a product by SKU and its gallery, the category tree, orders (open, status, comments, hold, invoice, ship, credit memo, cancel), a customer by email, the configuration, the cache and index state, the clean-up of records. |
 | `magento-storefront.steps.js` | The storefront: the customer session, the top menu, breadcrumbs, the product list (amount, sorting, direction, list and grid, paging, layered navigation), search and suggestions, the product page (options, quantity, add to cart, price), the mini cart, the cart (quantity, remove, totals, coupon, shipping estimate), the checkout through to the order number, the account pages, the order history, the address book, the wish list, the comparison list, reviews, the newsletter, field errors. |
+| `magento.steps.js` | Both sides: the messages (success, error, warning, notice), the confirmation dialogs, the settled wait. |
 | `magento-helpers.js` | Shared plumbing: the wait budget, the settled signal, presence and value assertions, URLs, the users registry, messages, dialogs, named admin pages, both kinds of admin grid, admin form fields and sections. It registers no step. |
 
 ## Rules for a new step
