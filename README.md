@@ -77,10 +77,10 @@ npm install --save-dev @webship-js/magento-steps
 
 | Path | Purpose |
 | --- | --- |
-| `tests/step-definitions/magento.steps.js` | Both sides: messages, confirmation dialogs, the settled wait. |
 | `tests/step-definitions/magento-admin.steps.js` | Admin panel: session, named pages, page title, menu, access denied, page buttons, grids, forms, tabs. |
 | `tests/step-definitions/magento-admin-content.steps.js` | Admin content: products, the category tree, orders, customers, configuration, cache and index, clean-up. |
 | `tests/step-definitions/magento-storefront.steps.js` | Storefront: customer session, menu, breadcrumbs, product list, search, product page, mini cart, cart, checkout, account, wish list, compare, reviews, newsletter, field errors. |
+| `tests/step-definitions/magento.steps.js` | Both sides: messages, confirmation dialogs, the settled wait. |
 | `tests/step-definitions/magento-helpers.js` | Shared plumbing. It registers no step. |
 | `tests/features/*.feature` | Reference features for a store with the sample data. |
 | `tests/features/90-assertions-must-fail.feature` | Scenarios that state something false: `npm run test:must-fail` passes only when every one of them fails with a helpful message. |
@@ -90,17 +90,6 @@ npm install --save-dev @webship-js/magento-steps
 ## Steps
 
 128 step definitions. The JSDoc block above each one holds five examples.
-
-### Both sides
-
-```gherkin
-Then I should see the success message "You saved the product."
-Then I should not see an error message
-Then I should see the confirmation "Are you sure you want to delete this category?"
-When I confirm the action
-When I dismiss the confirmation
-When I wait for the page to settle
-```
 
 ### Admin panel: session, pages, menu
 
@@ -253,6 +242,17 @@ the form a person sees.
 `I place the order` remembers the order number of the success page: "the last
 placed order" is then found in the orders grid of the admin panel and in the
 order history of the customer, in the same scenario.
+
+### Both sides
+
+```gherkin
+Then I should see the success message "You saved the product."
+Then I should not see an error message
+Then I should see the confirmation "Are you sure you want to delete this category?"
+When I confirm the action
+When I dismiss the confirmation
+When I wait for the page to settle
+```
 
 ## Accounts
 
