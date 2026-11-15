@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/webship/magento-steps/2.0.x/assets/logo.svg" alt="Magento logo" width="96"></p>
+
 # magento-steps
 
 Cucumber step definitions for testing Magento Open Source stores with
@@ -398,3 +400,7 @@ failed scenario once more.
 ## License
 
 MIT
+
+## Logo
+
+The Magento logo in this README comes from Simple Icons 16.37.0 (CC0-1.0), filled with the colour the set lists for the brand. The Magento name and logo are trademarks of their owner; this pack is not affiliated with or endorsed by them.
