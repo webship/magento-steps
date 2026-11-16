@@ -1,6 +1,6 @@
 {
   "name": "@webship-js/magento-steps",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cucumber step definitions for testing Magento Open Source stores with webship-js: the admin panel (session, menu, grids, forms, catalog, orders, customers, cart price rules, content, configuration, cache and index, permissions) and the storefront (catalog, layered navigation, search, product page, cart, checkout, customer account, wish list, compare, reviews, newsletter).",
   "main": "tests/step-definitions/magento.steps.js",
   "files": [
