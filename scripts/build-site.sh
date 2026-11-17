@@ -89,9 +89,18 @@ ddev start </dev/null
 SITE_URL="$(ddev describe -j | python3 -c "import json,sys; print(json.load(sys.stdin)['raw']['primary_url'])")"
 
 step "Packages from $MIRROR_URL"
+# The project template first, the packages second. `ddev composer
+# create-project` without --no-install runs its own `composer install` and,
+# before it, checks each option of the command with a `composer install
+# --dry-run`; with DDEV 1.24 that check never returns for this project (the
+# dry run lists some 400 packages) and the build stops after the template is
+# in place. A rebuild that stopped there finds composer.json without vendor/.
 if [ ! -f composer.json ]; then
   ddev composer create-project </dev/null --repository-url="$MIRROR_URL" \
-    "magento/project-community-edition:$MAGENTO_VERSION" . --no-interaction --prefer-dist
+    "magento/project-community-edition:$MAGENTO_VERSION" . --no-interaction --prefer-dist --no-install
+fi
+if [ ! -f vendor/autoload.php ]; then
+  ddev composer install </dev/null --no-interaction --prefer-dist
 fi
 
 # Modules a test store never installs. They are left out at install time (not
