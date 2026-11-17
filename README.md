@@ -25,6 +25,101 @@ carries the name of the platform.
 The pack is for **Magento Open Source**, the community edition. It needs no
 account, no access key and no paid or external service.
 
+## From nothing to a green run
+
+What the machine needs: Docker, [DDEV](https://ddev.com), git, python3, curl, and Node.js 20 or later with npm. PHP, the database and the search engine run in DDEV's containers; the store needs about 2 GB of memory and 5 GB of disk (see [The test store](#the-test-store)).
+
+**1. The store.** The pack's own build script (the one CI runs) installs Magento Open Source with its sample data in a DDEV project and creates the accounts of [Test users](#test-users). It takes a few minutes, more the first time it downloads the packages.
+
+```bash
+git clone https://github.com/webship/magento-steps.git
+SITE_DIR="$PWD/magento-site" magento-steps/scripts/build-site.sh
+```
+
+The store answers at `https://magentosteps.ddev.site` and its admin panel at `https://magentosteps.ddev.site/admin`.
+
+**2. A test project.**
+
+```bash
+mkdir magento-tests && cd magento-tests
+npm init -y
+npm install --save-dev webship-js @webship-js/magento-steps
+npx init-webship-js
+```
+
+`npx init-webship-js` writes `cucumber.js`, `playwright.config.ts`, the `tests/` folders with a first feature and the `npm test` scripts, and installs Chromium. npm usually runs it already when it installs webship-js; a second run changes nothing.
+
+**3. `cucumber.js`.** Replace the file with the wiring of the pack: the step files of webship-js and of the pack, the address of the store, the admin path, and the accounts (the JSON of [Test users](#test-users)).
+
+```javascript
+module.exports = {
+  default: {
+    requireModule: ['tsx/cjs'],
+    require: [
+      'node_modules/webship-js/tests/step-definitions/**/*.js',
+      'node_modules/@webship-js/magento-steps/tests/step-definitions/*.js',
+      'tests/step-definitions/**/*.js',
+    ],
+    paths: ['tests/features/**/*.feature'],
+    format: ['@cucumber/pretty-formatter', 'json:tests/reports/cucumber_report.json'],
+    worldParameters: {
+      launchUrl: process.env.LAUNCH_URL || 'https://magentosteps.ddev.site',
+      adminPath: 'admin',
+      // `When I rebuild the invalid indexes` runs this command in siteDir (the folder of the store).
+      reindexCommand: 'ddev exec php bin/magento indexer:reindex',
+      siteDir: '../magento-site',
+      // The waits webship-js adds around each page, scenario and step (milliseconds).
+      minWaitTime: { page: 3000, before_scenario: 0, after_scenario: 0, before_step: 0, after_step: 0 },
+      users: {
+        admin: { username: 'admin', password: 'Admin123456789!' },
+        sales: { username: 'sales', password: 'Sales123456789!' },
+        customer: { email: 'customer@example.com', password: 'Customer123456789!', name: 'Casey Customer' },
+        shopper: { email: 'shopper@example.com', password: 'Shopper123456789!', name: 'Sam Shopper' },
+      },
+    },
+  },
+};
+```
+
+**4. A first feature**, `tests/features/first-run.feature`:
+
+```gherkin
+Feature: First run
+  Scenario: An administrator logs in to the admin panel
+    Given I am logged in to the admin panel as "admin"
+    Then the admin page title should be "Dashboard"
+
+  Scenario: A visitor searches the store
+    Given I am on the homepage
+    When I search the store for "yoga"
+    Then I should see the product "Cronus Yoga Pant" in the product list
+```
+
+**5. Run it.**
+
+```bash
+npm test
+```
+
+A green first run prints every step, then the summary (the starter feature of `npx init-webship-js` and the two scenarios above, passed) and the HTML report it wrote:
+
+```
+3 scenarios (3 passed)
+7 steps (7 passed)
+0m17.010s (executing steps: 0m16.968s)
+[webship-js] HTML report → …/magento-tests/tests/reports/cucumber_report.html
+```
+
+From there, copy the features of [`tests/features/`](tests/features/) (they also ship in the package, under `node_modules/@webship-js/magento-steps/tests/features/`): together they use every step of the pack.
+
+### What the suite tests
+
+The features of this repository run every step of the pack against the sample-data store, in CI on every change (the admin lane, the storefront lane, and the assertions that must fail): logging in to and out of the admin panel as an administrator and as a restricted user, refused logins and what the restricted role may and may not open, the menu and the named pages, both kinds of grid (keyword search, filters, sorting, paging, page size, actions), products (validation; a simple product created, shown in the store, changed and removed; images; a configurable product read), the category tree (a subcategory added and removed), orders from the checkout through invoice, shipment, hold, credit memo and cancel, customers and their addresses and groups, cart price rules with a coupon used in the cart, pages and blocks, the configuration, the cache and the indexes, reviews and newsletter subscribers from the store to the admin panel; and in the store: the menu and categories, layered navigation, sorting, list and grid modes, paging, search with its suggestions, the product page with options and quantity, the mini cart and the cart (update, estimate, coupon, empty), the checkout as a guest and as a customer, the customer account (login, logout, registration, the account pages, the address book), the wish list, the comparison list and the contact form.
+
+Every step of the pack runs in a feature, and every assertion with a `not` runs both ways but one: `I should not see the last placed order in the orders grid` cannot be true on a working store (the step clears the grid's filters and searches the order the scenario placed, which the store always lists).
+
+Not tested: the paid edition and its features, payment gateways and carrier services, the Page Builder stage, multiple websites, stores, currencies and languages, other themes, the mobile menu, moving a category, bundle, grouped, virtual and downloadable products, creating an order in the admin panel, tax rules, and e-mail (it goes to DDEV's Mailpit and no step reads it). What a run leaves on the store: its four orders (the platform cannot delete an order; see [Accounts](#accounts)), the carts of its visitors and customers (the store keeps a cart until its own clean-up of old carts, a cron job that does not run on the test store), the search terms the visitors typed (they feed the search suggestions), and, after the first run, the other fields of the General configuration section, which the admin panel stores the first time the section is saved.
+
 ## Requirements
 
 - Node.js 20 or later
@@ -269,7 +364,8 @@ feature never creates or deletes one of them.
 
 A customer that a scenario registers is content: the scenario removes it
 (`Given there is no customer "…"`). Orders cannot be deleted in the admin
-panel: every run leaves its orders behind, closed or cancelled.
+panel: every run leaves four orders behind, the one taken through its life
+closed, one cancelled, and the two of the checkout feature pending.
 
 ## Test users
 
@@ -399,8 +495,8 @@ scenario (the line of its `Scenario:`); the paths of `cucumber.js` are left out
 when the command line names any. `FEATURES=tests/features/a.feature,tests/features/b.feature npm test`
 runs a subset too.
 
-The suite leaves the site as it found it, apart from the orders: run it twice
-in a row.
+The suite leaves the site as it found it, apart from its orders and carts (see
+[What the suite tests](#what-the-suite-tests)): run it twice in a row.
 
 `BROWSER=firefox npm test` runs the suite in Firefox (`npx playwright install
 firefox` once). Use it on a machine where other container projects start and
