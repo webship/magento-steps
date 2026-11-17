@@ -17,6 +17,7 @@ Feature: Categories in the admin panel
   Scenario: Selecting a category opens its form
     When I select the "Gear" category in the tree
     Then the "Category Name" form field should be "Gear"
+    But the "Category Name" form field should not be "Bags"
     And the "Enable Category" form field should be "on"
 
   @critical

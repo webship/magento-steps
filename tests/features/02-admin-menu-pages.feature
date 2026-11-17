@@ -20,6 +20,7 @@ Feature: Admin panel menu and pages
   Scenario: A menu item opens its page
     When I open the "Catalog > Products" admin menu item
     Then the admin page title should be "Products"
+    But the admin page title should not be "Dashboard"
     When I open the "Sales > Orders" admin menu item
     Then the admin page title should be "Orders"
     When I open the "Dashboard" admin menu item

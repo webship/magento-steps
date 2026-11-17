@@ -42,6 +42,9 @@ Feature: The checkout
     Then I should see the order confirmation
     And I should see "gary.guest@example.com"
     And the mini cart should show 0 items
+    # A guest's order belongs to no account.
+    Given I am logged in as the customer "customer"
+    Then my order history should not list the last placed order
 
   Scenario: A customer orders with a saved address
     Given I am logged in as the customer "shopper"

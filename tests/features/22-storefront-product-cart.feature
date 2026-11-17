@@ -65,4 +65,5 @@ Feature: The product page and the cart
     And I go to the cart
     And I apply the coupon "NOT-A-CODE"
     Then I should see the error message "is not valid."
+    But I should not see the success message "You used coupon code"
     And the cart order total should be "$34.00"
