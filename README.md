@@ -271,6 +271,26 @@ A customer that a scenario registers is content: the scenario removes it
 (`Given there is no customer "…"`). Orders cannot be deleted in the admin
 panel: every run leaves its orders behind, closed or cancelled.
 
+## Test users
+
+The accounts this repository's suite logs in as, exactly as `cucumber.js`
+lists them in `worldParameters.users` (the default values; `ADMIN_USER`,
+`ADMIN_PASSWORD`, `SALES_USER`, `SALES_PASSWORD`, `CUSTOMER_EMAIL`,
+`CUSTOMER_PASSWORD`, `SHOPPER_EMAIL` and `SHOPPER_PASSWORD` replace them).
+[`scripts/build-site.sh`](scripts/build-site.sh) creates them on the local test
+store, and CI does the same on the runner: the installer creates `admin`,
+[`scripts/site-accounts.php`](scripts/site-accounts.php) the three others. They
+are placeholder credentials of that throwaway store, not of any real one.
+
+```json
+{
+  "admin": { "username": "admin", "password": "Admin123456789!" },
+  "sales": { "username": "sales", "password": "Sales123456789!" },
+  "customer": { "email": "customer@example.com", "password": "Customer123456789!", "name": "Casey Customer" },
+  "shopper": { "email": "shopper@example.com", "password": "Shopper123456789!", "name": "Sam Shopper" }
+}
+```
+
 ## The test store
 
 `scripts/build-site.sh` builds the store the suite runs against, without a
