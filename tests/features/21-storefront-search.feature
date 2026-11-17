@@ -13,6 +13,15 @@ Feature: Searching the store
     And I should see the product "Cronus Yoga Pant" in the product list
     But I should not see the product "Joust Duffle Bag" in the product list
 
+  # A link followed with the webship-js step: the settled wait makes sure the
+  # scripts of the new page are loaded before the next step.
+  Scenario: A link of the footer leads to the advanced search
+    Given I am on the homepage
+    When I follow "Advanced Search"
+    And I wait for the page to settle
+    Then the breadcrumbs should be "Home > Catalog Advanced Search"
+    And I should see "Search Settings"
+
   Scenario: A search by SKU finds the product
     Given I am on the homepage
     When I search the store for "24-MB01"

@@ -17,7 +17,8 @@ Feature: Configuration, cache and index state
     # A saved setting invalidates cache types: the suite reads the state and flushes.
     And some cache types should be invalidated
     When I flush the cache
-    Then no cache type should be invalidated
+    Then I should see a success message
+    And no cache type should be invalidated
     Given I am on the "general" configuration section
     When I set the "Store Name" configuration field of "Store Information" to ""
     And I save the form

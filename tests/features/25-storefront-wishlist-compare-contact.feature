@@ -40,6 +40,10 @@ Feature: The wish list, the comparison list and the contact form
     Then I should see the field error "This is a required field." for "Name"
     And I should see the field error "This is a required field." for "Email"
     And I should not see a success message
+    When I fill in the "Email" store field with "gail.guest@example.com"
+    And I press the "Submit" store button
+    Then I should see the field error "This is a required field." for "Name"
+    But I should not see the field error "This is a required field." for "Email"
 
   Scenario: The contact form is sent
     Given I am on "/contact/"

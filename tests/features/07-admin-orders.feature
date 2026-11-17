@@ -34,6 +34,7 @@ Feature: Orders, from the checkout to the back office
     Then I should see the last placed order in the orders grid
     When I open the last placed order in the admin panel
     Then the order status should be "Pending"
+    But the order status should not be "Complete"
     And I should see "gail.guest@example.com"
     And I should see "Flat Rate - Fixed"
     And I should see "Check / Money order"
