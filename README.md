@@ -369,8 +369,15 @@ npm run test:admin       # the admin panel lane
 npm run test:storefront  # the storefront lane
 npm run test:must-fail   # every false statement must fail with a helpful message
 npm run test:examples    # the JSDoc examples and the feature steps against the patterns
+npm run test:paths       # a feature or a scenario named on the command line runs alone
 npm run test:dry         # undefined and ambiguous steps
 ```
+
+`npx cucumber-js tests/features/21-storefront-search.feature` runs one feature
+and `npx cucumber-js tests/features/21-storefront-search.feature:<line>` one
+scenario (the line of its `Scenario:`); the paths of `cucumber.js` are left out
+when the command line names any. `FEATURES=tests/features/a.feature,tests/features/b.feature npm test`
+runs a subset too.
 
 The suite leaves the site as it found it, apart from the orders: run it twice
 in a row.
