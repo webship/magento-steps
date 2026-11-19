@@ -38,6 +38,17 @@ SITE_DIR="$PWD/magento-site" magento-steps/scripts/build-site.sh
 
 The store answers at `https://magentosteps.ddev.site` and its admin panel at `https://magentosteps.ddev.site/admin`.
 
+In the [Webship Workspace](https://github.com/webship/workspace), its Magento plugin builds the store instead: Magento Open Source 2.4 with the same sample data, from the public Mage-OS mirror (no access keys), in production mode, in a sites folder of the workspace (`test/` here; `dev/`, `sandboxes/` and `demos/` work the same):
+
+```bash
+bash core/scripts/plugins.sh --require magento --with-needs
+bash core/scripts/plugins.sh --activate magento --with-needs
+bash core/scripts/plugins.sh --install magento
+bash test/cmd-magento-project.sh mysite --install --add-users
+```
+
+That store answers at `https://mysite.ddev.site`, with the plugin's accounts: `administrator` and `sales` (a role limited to Sales) in the admin panel, the customers `customer@example.com` (Casey Customer) and `shopper@example.com` (Sam Shopper), each with the password `dD.123123ddd`; step 3 names them. The first feature passes there, and so do the features of [`tests/features/`](tests/features/).
+
 **2. A test project.**
 
 ```bash
@@ -61,6 +72,8 @@ module.exports = {
       'tests/step-definitions/**/*.js',
     ],
     paths: ['tests/features/**/*.feature'],
+    // The scenarios of 90-assertions-must-fail.feature state something false on purpose: a run leaves them out.
+    tags: process.env.CUCUMBER_TAGS || 'not @wip and not @must-fail',
     format: ['@cucumber/pretty-formatter', 'json:tests/reports/cucumber_report.json'],
     worldParameters: {
       launchUrl: process.env.LAUNCH_URL || 'https://magentosteps.ddev.site',
@@ -80,6 +93,8 @@ module.exports = {
   },
 };
 ```
+
+On a store from the Webship Workspace (step 1), the accounts are the plugin's: `admin: { username: 'administrator', password: 'dD.123123ddd' }`, `sales: { username: 'sales', password: 'dD.123123ddd' }`, and the two customers with `password: 'dD.123123ddd'` (the same addresses and names); `siteDir` is the folder of the store (`test/mysite` in the workspace). Its address goes in `LAUNCH_URL` (step 5).
 
 **4. A first feature**, `tests/features/first-run.feature`:
 
@@ -101,6 +116,7 @@ Feature: First run
 npm test
 ```
 
+(`LAUNCH_URL=https://mysite.ddev.site npm test` for a store at another address.)
 A green first run prints every step, then the summary (the starter feature of `npx init-webship-js` and the two scenarios above, passed) and the HTML report it wrote:
 
 ```
@@ -110,7 +126,7 @@ A green first run prints every step, then the summary (the starter feature of `n
 [webship-js] HTML report → …/magento-tests/tests/reports/cucumber_report.html
 ```
 
-From there, copy the features of [`tests/features/`](tests/features/) (they also ship in the package, under `node_modules/@webship-js/magento-steps/tests/features/`): together they use every step of the pack.
+From there, copy the features of [`tests/features/`](tests/features/) (they also ship in the package, under `node_modules/@webship-js/magento-steps/tests/features/`): together they use every step of the pack. The `tags` line of step 3 leaves out the scenarios of `90-assertions-must-fail.feature`, which state something false on purpose (this repository's `npm run test:must-fail` checks that each of them fails).
 
 ### What the suite tests
 
