@@ -27,7 +27,7 @@ account, no access key and no paid or external service.
 
 ## From nothing to a green run
 
-What the machine needs: Docker, [DDEV](https://ddev.com), git, python3, curl, and Node.js 20 or later with npm. PHP, the database and the search engine run in DDEV's containers; the store needs about 2 GB of memory and 5 GB of disk (see [The test store](#the-test-store)).
+What the machine needs: Docker, [DDEV](https://ddev.com), git, python3, curl, and Node.js 24 or later with npm. PHP, the database and the search engine run in DDEV's containers; the store needs about 2 GB of memory and 5 GB of disk (see [The test store](#the-test-store)).
 
 **1. The store.** The pack's own build script (the one CI runs) installs Magento Open Source with its sample data in a DDEV project and creates the accounts of [Test users](#test-users). It takes a few minutes, more the first time it downloads the packages.
 
@@ -138,7 +138,7 @@ Not tested: the paid edition and its features, payment gateways and carrier serv
 
 ## Requirements
 
-- Node.js 20 or later
+- Node.js 24 or later
 - A webship-js 2.0 test project (`webship-js` 2.0.10 or later)
 - A Magento Open Source 2.4 store to test, with the default storefront theme
   and the default admin theme, in English
